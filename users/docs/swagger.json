@@ -1,0 +1,71 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Users",
+        "contact": {},
+        "version": "1.0"
+    },
+    "basePath": "/",
+    "paths": {
+        "/users": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Регистрация пользователя в системе",
+                "parameters": [
+                    {
+                        "description": "Зарегистрировать пользователя",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.RegisterUser"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {},
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/responses.httpError"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "requests.RegisterUser": {
+            "type": "object",
+            "required": [
+                "password",
+                "password_confirmation",
+                "username"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "password_confirmation": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.httpError": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "object"
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,31 @@
+swagger: '2.0'
+info:
+  title: API V1
+  version: v1
+paths:
+  /users:
+    post:
+      summary: Регистрация пользователя в системе
+      description: DADA
+      operationId: get-logs-system
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/UserRegister'
+      responses:
+        200:
+          description: OK
+
+definitions:
+  UserRegister:
+    type: object
+    properties:
+      username:
+        type: string
+      password:
+        type: string
+      password_confirmation:
+        type: string
+    required: [username, password, password_confirmation]
