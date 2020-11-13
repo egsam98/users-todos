@@ -28,7 +28,7 @@ func CheckAuth(authUrl string) gin.HandlerFunc {
 		switch res.StatusCode {
 		case http.StatusOK:
 			userID := struct {
-				Value int `json:"id"`
+				Value int32 `json:"id"`
 			}{}
 			if err := jsonDecoder.Decode(&userID); err != nil {
 				responses.RespondInternalError(ctx, err)

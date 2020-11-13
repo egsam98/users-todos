@@ -34,16 +34,16 @@ func (ts *TodoService) CreateTodo(ctx context.Context, req requests.NewTodo) (*d
 		deadline.Valid = true
 	}
 
-	userID, ok := context2.GetUserID(ctx)
-	if !ok {
-		return nil, errors.New("userID doesn't exist in context")
+	userID, err := context2.GetUserID(ctx)
+	if err != nil {
+		return nil, errors.WithStack(err)
 	}
 
 	todo, err := ts.q.CreateTodo(ctx, db.CreateTodoParams{
 		Title:       req.Title,
 		Description: desc,
 		Deadline:    deadline,
-		UserID:      int32(userID),
+		UserID:      userID,
 	})
 	return &todo, errors.WithStack(err)
 }

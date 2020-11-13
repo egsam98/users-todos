@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -16,7 +17,7 @@ func ValidateJSON(ctx *gin.Context, obj interface{}) (gin.H, bool) {
 		panic("object must be a pointer")
 	}
 
-	err := ctx.ShouldBindJSON(obj)
+	err := ctx.ShouldBindBodyWith(obj, binding.JSON)
 	if err == nil {
 		return nil, true
 	}
@@ -38,7 +39,7 @@ func ValidateJSON(ctx *gin.Context, obj interface{}) (gin.H, bool) {
 
 	// Дефолтная ошибка
 	if len(h) == 0 {
-		h["body"] = "must be json"
+		h["body"] = err.Error()
 	}
 	return h, false
 }

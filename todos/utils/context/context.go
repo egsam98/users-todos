@@ -2,9 +2,15 @@ package context
 
 import (
 	"context"
+	"errors"
 )
 
-func GetUserID(ctx context.Context) (int, bool) {
-	userID, ok := ctx.Value("userID").(int)
-	return userID, ok
+var ErrNoUserID = errors.New("userID does not exist in context")
+
+func GetUserID(ctx context.Context) (int32, error) {
+	userID, ok := ctx.Value("userID").(int32)
+	if !ok {
+		return 0, ErrNoUserID
+	}
+	return userID, nil
 }
