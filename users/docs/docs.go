@@ -24,7 +24,43 @@ var doc = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/users": {
+        "/signin": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Вход в систему",
+                "parameters": [
+                    {
+                        "description": "Зарегистрировать пользователя",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.Signin"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.TokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/responses.httpError"
+                        }
+                    }
+                }
+            }
+        },
+        "/signup": {
             "post": {
                 "consumes": [
                     "application/json"
@@ -40,7 +76,7 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/requests.RegisterUser"
+                            "$ref": "#/definitions/requests.Signup"
                         }
                     }
                 ],
@@ -57,7 +93,22 @@ var doc = `{
         }
     },
     "definitions": {
-        "requests.RegisterUser": {
+        "requests.Signin": {
+            "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "requests.Signup": {
             "type": "object",
             "required": [
                 "password",
@@ -72,6 +123,14 @@ var doc = `{
                     "type": "string"
                 },
                 "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.TokenResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
                     "type": "string"
                 }
             }

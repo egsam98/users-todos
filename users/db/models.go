@@ -2,12 +2,8 @@
 
 package db
 
-import (
-	"database/sql"
-)
-
 type User struct {
-	ID       sql.NullInt32
-	Username string
-	Password string
+	ID       int32  `json:"id"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }

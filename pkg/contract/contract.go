@@ -9,24 +9,27 @@ import (
 
 // Валидация входных данных в контроллерах
 // Используется custom-тэг "error" для большей читаемости JSON-ответа сервера с ошибками валидации
-func Validate(ctx *gin.Context, obj interface{}) gin.H {
-	h := gin.H{}
+// Возвращает map ошибок валидация и boolean - является объект валидным ?
+func Validate(ctx *gin.Context, obj interface{}) (gin.H, bool) {
+	if reflect.ValueOf(obj).Kind() != reflect.Ptr {
+		panic("object must be a pointer")
+	}
 
 	err := ctx.ShouldBindJSON(obj)
 	if err == nil {
-		return h
+		return nil, true
 	}
 
-	errs, ok := err.(validator.ValidationErrors)
-	if !ok {
-		panic(err)
-	}
+	h := gin.H{}
 
-	t := reflect.TypeOf(obj).Elem()
-
-	for _, err := range errs {
-		field, _ := t.FieldByName(err.Field())
-		h[field.Tag.Get("json")] = field.Tag.Get("error")
+	if errs, ok := err.(validator.ValidationErrors); ok {
+		t := reflect.TypeOf(obj).Elem()
+		for _, err := range errs {
+			field, _ := t.FieldByName(err.Field())
+			h[field.Tag.Get("json")] = field.Tag.Get("error")
+		}
+	} else {
+		h["body"] = "request body must be JSON"
 	}
-	return h
+	return h, false
 }

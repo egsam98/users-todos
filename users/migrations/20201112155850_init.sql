@@ -1,6 +1,6 @@
 -- +goose Up
-create table if not exists users (
-    id serial,
+create table users (
+    id serial not null,
     username varchar not null unique,
     password varchar not null
 );

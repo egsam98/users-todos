@@ -8,6 +8,7 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
+	"github.com/egsam98/users-todos/users/controllers/middlewares"
 	_ "github.com/egsam98/users-todos/users/docs"
 
 	_ "github.com/lib/pq"
@@ -36,7 +37,11 @@ func initRouter(q *db.Queries) *gin.Engine {
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	usersController := controllers.NewUsersController(q)
-	r.POST("/users", usersController.RegisterUser)
+	r.POST("/signup", usersController.Signup)
+	r.POST("/signin", usersController.Signin)
+
+	safeR := r.Group("/", middlewares.NewJwtMiddleware(q).Process)
+	safeR.GET("/users/:id", usersController.FetchUser)
 
 	return r
 }

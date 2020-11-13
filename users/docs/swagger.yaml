@@ -1,6 +1,16 @@
 basePath: /
 definitions:
-  requests.RegisterUser:
+  requests.Signin:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  requests.Signup:
     properties:
       password:
         type: string
@@ -13,6 +23,11 @@ definitions:
     - password_confirmation
     - username
     type: object
+  responses.TokenResponse:
+    properties:
+      token:
+        type: string
+    type: object
   responses.httpError:
     properties:
       error:
@@ -23,7 +38,7 @@ info:
   title: Users
   version: "1.0"
 paths:
-  /users:
+  /signin:
     post:
       consumes:
       - application/json
@@ -33,7 +48,30 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/requests.RegisterUser'
+          $ref: '#/definitions/requests.Signin'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.TokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.httpError'
+      summary: Вход в систему
+      tags:
+      - users
+  /signup:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Зарегистрировать пользователя
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/requests.Signup'
       responses:
         "201": {}
         "400":

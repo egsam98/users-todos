@@ -5,3 +5,4 @@ packages:
     path: "./db"
     queries: "./schema"
     schema: "./schema"
+    emit_json_tags: true
