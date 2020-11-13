@@ -14,13 +14,12 @@ import (
 
 // Сервис взаимодействия с пользователями
 type UserService struct {
-	q          *db.Queries
-	hash       hash.Hash
-	jwtService *JwtService
+	q    *db.Queries
+	hash hash.Hash
 }
 
 func NewUserService(q *db.Queries) *UserService {
-	return &UserService{q: q, hash: sha1.New(), jwtService: NewJwtService(q)}
+	return &UserService{q: q, hash: sha1.New()}
 }
 
 // Зарегистрировать пользователя в системе
@@ -31,16 +30,13 @@ func (us *UserService) Register(ctx context.Context, req requests.Signup) error 
 	})
 }
 
-func (us *UserService) Login(ctx context.Context, req requests.Signin) (string, error) {
+// Аутентификация пользователя по username и password
+func (us *UserService) Authenticate(ctx context.Context, req requests.Signin) (db.User, error) {
 	user, err := us.q.FindUser(ctx, db.FindUserParams{
 		Username: req.Username,
 		Password: us.hashPassword(req.Password),
 	})
-	if err != nil {
-		return "", errors.WithStack(err)
-	}
-
-	return us.jwtService.Generate(user)
+	return user, errors.WithStack(err)
 }
 
 // Поиск пользователя в БД по его ID

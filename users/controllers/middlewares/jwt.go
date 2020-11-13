@@ -8,6 +8,7 @@ import (
 	"github.com/egsam98/users-todos/pkg/responses"
 	"github.com/egsam98/users-todos/users/db"
 	"github.com/egsam98/users-todos/users/services"
+	"github.com/egsam98/users-todos/users/utils/env"
 )
 
 // Миддлвар для проверки присутствия и валидности JWT-токена
@@ -15,8 +16,8 @@ type JwtMiddleware struct {
 	service *services.JwtService
 }
 
-func NewJwtMiddleware(q *db.Queries) *JwtMiddleware {
-	return &JwtMiddleware{service: services.NewJwtService(q)}
+func NewJwtMiddleware(environment env.Environment, q *db.Queries) *JwtMiddleware {
+	return &JwtMiddleware{service: services.NewJwtService(environment, q)}
 }
 
 // Функция вызова миддлвара

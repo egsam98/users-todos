@@ -16,14 +16,16 @@ import (
 	responses2 "github.com/egsam98/users-todos/users/controllers/responses"
 	"github.com/egsam98/users-todos/users/db"
 	"github.com/egsam98/users-todos/users/services"
+	"github.com/egsam98/users-todos/users/utils/env"
 )
 
 type UsersController struct {
-	service *services.UserService
+	userService *services.UserService
+	jwtService  *services.JwtService
 }
 
-func NewUsersController(q *db.Queries) *UsersController {
-	return &UsersController{service: services.NewUserService(q)}
+func NewUsersController(environment env.Environment, q *db.Queries) *UsersController {
+	return &UsersController{userService: services.NewUserService(q), jwtService: services.NewJwtService(environment, q)}
 }
 
 // Signup godoc
@@ -42,7 +44,7 @@ func (uc *UsersController) Signup(ctx *gin.Context) {
 		return
 	}
 
-	if err := uc.service.Register(ctx, req); err != nil {
+	if err := uc.userService.Register(ctx, req); err != nil {
 		if errors.IsPgError(err, errors.PgErrUniqueViolated) {
 			responses.RespondError(ctx, http.StatusBadRequest, "user with this username already exists")
 			return
@@ -70,13 +72,19 @@ func (uc *UsersController) Signin(ctx *gin.Context) {
 		return
 	}
 
-	token, err := uc.service.Login(ctx, req)
+	user, err := uc.userService.Authenticate(ctx, req)
 	if err != nil {
 		if errors2.Cause(err) == sql.ErrNoRows {
 			responses.RespondError(ctx, http.StatusUnauthorized, "username or/and password is incorrect")
 		} else {
 			responses.RespondInternalError(ctx, err)
 		}
+		return
+	}
+
+	token, err := uc.jwtService.Generate(user)
+	if err != nil {
+		responses.RespondInternalError(ctx, err)
 		return
 	}
 
@@ -99,7 +107,7 @@ func (uc *UsersController) FetchUser(ctx *gin.Context) {
 		responses.RespondError(ctx, http.StatusBadRequest, "user ID must be integer")
 		return
 	}
-	user, err := uc.service.FindUser(ctx, id)
+	user, err := uc.userService.FindUser(ctx, id)
 	if err != nil {
 		if errors2.Cause(err) == sql.ErrNoRows {
 			responses.RespondError(ctx, http.StatusNotFound, fmt.Sprintf("user ID=%d is not found", id))

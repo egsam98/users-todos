@@ -8,8 +8,10 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
+	"github.com/egsam98/users-todos/pkg/env"
 	"github.com/egsam98/users-todos/users/controllers/middlewares"
 	_ "github.com/egsam98/users-todos/users/docs"
+	env2 "github.com/egsam98/users-todos/users/utils/env"
 
 	_ "github.com/lib/pq"
 
@@ -17,39 +19,37 @@ import (
 	"github.com/egsam98/users-todos/users/db"
 )
 
-const (
-	Addr         = ":8080"
-	DatabaseConn = "postgres://localhost:5432/users_dev"
-)
-
 // @title Users
 // @version 1.0
 // @BasePath /
 func main() {
-	q := initDB()
-	r := initRouter(q)
-	log.Fatal(r.Run(Addr))
+	var environment env2.Environment
+	env.InitEnvironment(&environment)
+	q := initDB(environment)
+	r := initRouter(environment, q)
+	log.Fatal(r.Run(environment.Addr))
 }
 
-func initRouter(q *db.Queries) *gin.Engine {
+func initRouter(environment env2.Environment, q *db.Queries) *gin.Engine {
 	r := gin.Default()
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	usersController := controllers.NewUsersController(q)
+	usersController := controllers.NewUsersController(environment, q)
 	r.POST("/signup", usersController.Signup)
 	r.POST("/signin", usersController.Signin)
 
-	safeR := r.Group("/", middlewares.NewJwtMiddleware(q).Process)
+	safeR := r.Group("/", middlewares.NewJwtMiddleware(environment, q).Process)
 	safeR.GET("/users/:id", usersController.FetchUser)
 
 	return r
 }
 
-func initDB() *db.Queries {
-	database, err := sql.Open("postgres", DatabaseConn)
+func initDB(environment env2.Environment) *db.Queries {
+	database, err := sql.Open(environment.DatabaseDriver, environment.DatabaseConn)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
+	log.Printf("Connected to database: %s\n", environment.DatabaseConn)
 	return db.New(database)
 }

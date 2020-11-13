@@ -1,11 +1,11 @@
-DRIVER=postgres
-DB_NAME=postgres://localhost:5432/users_dev
+DATABASE_DRIVER ?= postgres
+DATABASE_CONN ?= postgres://localhost:5432/users_dev
 
 migrate_up:
-	goose -dir migrations $(DRIVER) $(DB_NAME) up
+	goose -dir migrations $(DATABASE_DRIVER) $(DATABASE_CONN) up
 
 migrate_down:
-	goose -dir migrations $(DRIVER) $(DB_NAME) down
+	goose -dir migrations $(DATABASE_DRIVER) $(DATABASE_CONN) down
 
 sqlc:
 	sqlc generate
