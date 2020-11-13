@@ -6,5 +6,5 @@ create table if not exists todos (
     user_id integer not null
 );
 
--- name: CreateTodo :exec
-insert into todos (title, description, deadline, user_id) values ($1, $2, $3, $4);
+-- name: CreateTodo :one
+insert into todos (title, description, deadline, user_id) values ($1, $2, $3, $4) returning *;

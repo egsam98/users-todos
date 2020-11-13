@@ -1,0 +1,68 @@
+basePath: /
+definitions:
+  requests.NewTodo:
+    properties:
+      deadline:
+        type: string
+      description:
+        type: string
+      title:
+        type: string
+    required:
+    - title
+    type: object
+  responses.Todo:
+    properties:
+      deadline:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  responses.httpError:
+    properties:
+      error:
+        type: object
+    type: object
+info:
+  contact: {}
+  title: Todos
+  version: "1.0"
+paths:
+  /todos:
+    post:
+      parameters:
+      - description: JWT-токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Новая задача
+        in: body
+        name: todo
+        required: true
+        schema:
+          $ref: '#/definitions/requests.NewTodo'
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/responses.Todo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.httpError'
+      summary: Создать новую задачу
+      tags:
+      - auth
+securityDefinitions:
+  JWT-Token:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -10,6 +10,8 @@ import (
 
 	_ "github.com/lib/pq"
 
+	_ "github.com/egsam98/users-todos/todos/docs"
+
 	"github.com/egsam98/users-todos/pkg/env"
 	"github.com/egsam98/users-todos/pkg/middlewares"
 	"github.com/egsam98/users-todos/todos/controllers"
@@ -34,12 +36,12 @@ func main() {
 
 func initRouter(environment env2.Environment, q *db.Queries) *gin.Engine {
 	r := gin.Default()
-	r.Use(middlewares.CheckAuth(environment.AuthUrl))
-
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
+	safeR := r.Group("/", middlewares.CheckAuth(environment.AuthUrl))
+
 	todosController := controllers.NewTodosController(q)
-	r.POST("/todos", todosController.CreateTodo)
+	safeR.POST("/todos", todosController.CreateTodo)
 
 	return r
 }

@@ -8,8 +8,8 @@ import (
 	"database/sql"
 )
 
-const createTodo = `-- name: CreateTodo :exec
-insert into todos (title, description, deadline, user_id) values ($1, $2, $3, $4)
+const createTodo = `-- name: CreateTodo :one
+insert into todos (title, description, deadline, user_id) values ($1, $2, $3, $4) returning id, title, description, deadline, user_id
 `
 
 type CreateTodoParams struct {
@@ -19,12 +19,20 @@ type CreateTodoParams struct {
 	UserID      int32          `json:"user_id"`
 }
 
-func (q *Queries) CreateTodo(ctx context.Context, arg CreateTodoParams) error {
-	_, err := q.db.ExecContext(ctx, createTodo,
+func (q *Queries) CreateTodo(ctx context.Context, arg CreateTodoParams) (Todo, error) {
+	row := q.db.QueryRowContext(ctx, createTodo,
 		arg.Title,
 		arg.Description,
 		arg.Deadline,
 		arg.UserID,
 	)
-	return err
+	var i Todo
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.Deadline,
+		&i.UserID,
+	)
+	return i, err
 }
