@@ -7,11 +7,13 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	errors2 "github.com/pkg/errors"
 
 	"github.com/egsam98/users-todos/pkg/contract"
 	"github.com/egsam98/users-todos/pkg/errors"
 	"github.com/egsam98/users-todos/pkg/responses"
 	"github.com/egsam98/users-todos/users/controllers/requests"
+	responses2 "github.com/egsam98/users-todos/users/controllers/responses"
 	"github.com/egsam98/users-todos/users/db"
 	"github.com/egsam98/users-todos/users/services"
 )
@@ -24,25 +26,25 @@ func NewUsersController(q *db.Queries) *UsersController {
 	return &UsersController{service: services.NewUserService(q)}
 }
 
-// RegisterUser godoc
+// Signup godoc
 // @Summary Регистрация пользователя в системе
 // @Tags users
 // @Accept json
-// @Param user body requests.RegisterUser true "Зарегистрировать пользователя"
+// @Param user body requests.Signup true "Зарегистрировать пользователя"
 // @Success 201
 // @Failure 400 {object} responses.httpError
-// @Router /users [post]
-func (uc *UsersController) RegisterUser(ctx *gin.Context) {
-	var req requests.RegisterUser
-	errs := contract.Validate(ctx, &req)
-	if len(errs) > 0 {
+// @Router /signup [post]
+func (uc *UsersController) Signup(ctx *gin.Context) {
+	var req requests.Signup
+	errs, ok := contract.Validate(ctx, &req)
+	if !ok {
 		responses.RespondError(ctx, http.StatusBadRequest, errs)
 		return
 	}
 
 	if err := uc.service.Register(ctx, req); err != nil {
 		if errors.IsPgError(err, errors.PgErrUniqueViolated) {
-			responses.RespondError(ctx, 400, "user with this username already exists")
+			responses.RespondError(ctx, http.StatusBadRequest, "user with this username already exists")
 			return
 		}
 		responses.RespondInternalError(ctx, err)
@@ -58,6 +60,7 @@ func (uc *UsersController) RegisterUser(ctx *gin.Context) {
 // @Param user body requests.Signin true "Зарегистрировать пользователя"
 // @Success 200 {object} responses.Token
 // @Failure 400 {object} responses.httpError
+// @Failure 401 {object} responses.httpError
 // @Router /signin [post]
 func (uc *UsersController) Signin(ctx *gin.Context) {
 	var req requests.Signin
@@ -84,10 +87,12 @@ func (uc *UsersController) Signin(ctx *gin.Context) {
 // @Summary Запрос пользователя в системе по ID
 // @Tags users
 // @Accept json
-// @Param id path true "ID пользователя"
-// @Success 200 {object} responses.Token
+// @Param id path int true "ID пользователя"
+// @Success 200 {object} responses.User
 // @Failure 400 {object} responses.httpError
-// @Router /signin [post]
+// @Failure 403 {object} responses.httpError
+// @Failure 404 {object} responses.httpError
+// @Router /users/:id [get]
 func (uc *UsersController) FetchUser(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
@@ -104,5 +109,8 @@ func (uc *UsersController) FetchUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(200, user)
+	ctx.JSON(200, responses2.User{
+		ID:       user.ID,
+		Username: user.Username,
+	})
 }

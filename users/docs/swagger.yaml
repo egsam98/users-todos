@@ -23,9 +23,16 @@ definitions:
     - password_confirmation
     - username
     type: object
-  responses.TokenResponse:
+  responses.Token:
     properties:
       token:
+        type: string
+    type: object
+  responses.User:
+    properties:
+      id:
+        type: integer
+      username:
         type: string
     type: object
   responses.httpError:
@@ -53,9 +60,13 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/responses.TokenResponse'
+            $ref: '#/definitions/responses.Token'
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.httpError'
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/responses.httpError'
       summary: Вход в систему
@@ -79,6 +90,36 @@ paths:
           schema:
             $ref: '#/definitions/responses.httpError'
       summary: Регистрация пользователя в системе
+      tags:
+      - users
+  /users/:id:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.httpError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/responses.httpError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.httpError'
+      summary: Запрос пользователя в системе по ID
       tags:
       - users
 swagger: "2.0"
