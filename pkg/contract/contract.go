@@ -1,16 +1,17 @@
 package contract
 
 import (
+	"encoding/json"
 	"reflect"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 )
 
-// Валидация входных данных в контроллерах
+// Валидация входных данных в формате JSON в контроллерах
 // Используется custom-тэг "error" для большей читаемости JSON-ответа сервера с ошибками валидации
 // Возвращает map ошибок валидация и boolean - является объект валидным ?
-func Validate(ctx *gin.Context, obj interface{}) (gin.H, bool) {
+func ValidateJSON(ctx *gin.Context, obj interface{}) (gin.H, bool) {
 	if reflect.ValueOf(obj).Kind() != reflect.Ptr {
 		panic("object must be a pointer")
 	}
@@ -22,14 +23,22 @@ func Validate(ctx *gin.Context, obj interface{}) (gin.H, bool) {
 
 	h := gin.H{}
 
-	if errs, ok := err.(validator.ValidationErrors); ok {
+	switch err := err.(type) {
+	case validator.ValidationErrors:
 		t := reflect.TypeOf(obj).Elem()
-		for _, err := range errs {
+		for _, err := range err {
 			field, _ := t.FieldByName(err.Field())
 			h[field.Tag.Get("json")] = field.Tag.Get("error")
 		}
-	} else {
-		h["body"] = "request body must be JSON"
+	case *json.UnmarshalTypeError:
+		if err.Field != "" {
+			h[err.Field] = "must be " + err.Type.String()
+		}
+	}
+
+	// Дефолтная ошибка
+	if len(h) == 0 {
+		h["body"] = "must be json"
 	}
 	return h, false
 }

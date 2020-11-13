@@ -38,7 +38,7 @@ func NewUsersController(environment env.Environment, q *db.Queries) *UsersContro
 // @Router /signup [post]
 func (uc *UsersController) Signup(ctx *gin.Context) {
 	var req requests.Signup
-	errs, ok := contract.Validate(ctx, &req)
+	errs, ok := contract.ValidateJSON(ctx, &req)
 	if !ok {
 		responses.RespondError(ctx, http.StatusBadRequest, errs)
 		return
@@ -66,7 +66,7 @@ func (uc *UsersController) Signup(ctx *gin.Context) {
 // @Router /signin [post]
 func (uc *UsersController) Signin(ctx *gin.Context) {
 	var req requests.Signin
-	errs, ok := contract.Validate(ctx, &req)
+	errs, ok := contract.ValidateJSON(ctx, &req)
 	if !ok {
 		responses.RespondError(ctx, http.StatusBadRequest, errs)
 		return
