@@ -8,17 +8,16 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
-	"github.com/egsam98/users-todos/pkg/env"
-	_ "github.com/egsam98/users-todos/users/docs"
-	env2 "github.com/egsam98/users-todos/users/utils/env"
-
 	_ "github.com/lib/pq"
 
-	"github.com/egsam98/users-todos/users/controllers"
-	"github.com/egsam98/users-todos/users/db"
+	"github.com/egsam98/users-todos/pkg/env"
+	"github.com/egsam98/users-todos/pkg/middlewares"
+	"github.com/egsam98/users-todos/todos/controllers"
+	"github.com/egsam98/users-todos/todos/db"
+	env2 "github.com/egsam98/users-todos/todos/utils/env"
 )
 
-// @title Users
+// @title Todos
 // @version 1.0
 // @BasePath /
 //
@@ -35,16 +34,12 @@ func main() {
 
 func initRouter(environment env2.Environment, q *db.Queries) *gin.Engine {
 	r := gin.Default()
+	r.Use(middlewares.CheckAuth(environment.AuthUrl))
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	usersController := controllers.NewUsersController(environment, q)
-	r.POST("/signup", usersController.Signup)
-	r.POST("/signin", usersController.Signin)
-	r.POST("/auth", usersController.Auth(false))
-
-	safeR := r.Group("/", usersController.Auth(true))
-	safeR.GET("/users/:id", usersController.FetchUser)
+	todosController := controllers.NewTodosController(q)
+	r.POST("/todos", todosController.CreateTodo)
 
 	return r
 }

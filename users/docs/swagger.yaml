@@ -45,6 +45,26 @@ info:
   title: Users
   version: "1.0"
 paths:
+  /auth:
+    post:
+      parameters:
+      - description: JWT-токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "200":
+          description: Текущий пользователь в системе, определенный по JWT-токену
+          schema:
+            $ref: '#/definitions/responses.User'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.httpError'
+      summary: Аутентификация пользователя по JWT-токену
+      tags:
+      - auth
   /signin:
     post:
       consumes:
@@ -97,6 +117,11 @@ paths:
       consumes:
       - application/json
       parameters:
+      - description: JWT-токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: ID пользователя
         in: path
         name: id
@@ -122,4 +147,9 @@ paths:
       summary: Запрос пользователя в системе по ID
       tags:
       - users
+securityDefinitions:
+  JWT-Token:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

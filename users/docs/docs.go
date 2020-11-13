@@ -24,6 +24,37 @@ var doc = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth": {
+            "post": {
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Аутентификация пользователя по JWT-токену",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT-токен",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Текущий пользователь в системе, определенный по JWT-токену",
+                        "schema": {
+                            "$ref": "#/definitions/responses.User"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/responses.httpError"
+                        }
+                    }
+                }
+            }
+        },
         "/signin": {
             "post": {
                 "consumes": [
@@ -107,6 +138,13 @@ var doc = `{
                 ],
                 "summary": "Запрос пользователя в системе по ID",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT-токен",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "integer",
                         "description": "ID пользователя",
@@ -205,6 +243,13 @@ var doc = `{
                     "type": "object"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "JWT-Token": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`

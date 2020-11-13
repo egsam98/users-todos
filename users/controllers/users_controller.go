@@ -95,6 +95,7 @@ func (uc *UsersController) Signin(ctx *gin.Context) {
 // @Summary Запрос пользователя в системе по ID
 // @Tags users
 // @Accept json
+// @Param Authorization header string true "JWT-токен"
 // @Param id path int true "ID пользователя"
 // @Success 200 {object} responses.User
 // @Failure 400 {object} responses.httpError
@@ -121,4 +122,36 @@ func (uc *UsersController) FetchUser(ctx *gin.Context) {
 		ID:       user.ID,
 		Username: user.Username,
 	})
+}
+
+// Auth godoc
+// @Summary Аутентификация пользователя по JWT-токену
+// @Tags auth
+// @Param Authorization header string true "JWT-токен"
+// @Success 200 {object} responses.User "Текущий пользователь в системе, определенный по JWT-токену"
+// @Failure 401 {object} responses.httpError
+// @Router /auth [post]
+func (uc *UsersController) Auth(isMiddleware bool) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		authHeader := ctx.GetHeader("Authorization")
+		if authHeader == "" {
+			responses.RespondError(ctx, http.StatusForbidden, "Authorization header is not provided")
+			return
+		}
+
+		user, err := uc.jwtService.Parse(ctx, authHeader)
+		if err != nil {
+			responses.RespondError(ctx, http.StatusForbidden, gin.H{"jwt": err.Error()})
+			return
+		}
+
+		if isMiddleware {
+			ctx.Set("user", user)
+			return
+		}
+		ctx.JSON(200, responses2.User{
+			ID:       user.ID,
+			Username: user.Username,
+		})
+	}
 }

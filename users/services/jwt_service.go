@@ -49,6 +49,6 @@ func (js *JwtService) Parse(ctx context.Context, tokenString string) (*db.User, 
 		//err := err.(*jwt.ValidationError)
 	}
 
-	user, err := js.q.FindUserById(ctx, int32(claims["sub"].(float64)))
+	user, err := js.q.FindUserById(ctx, int32(claims["sub"].(float64))) // TODO: check casting
 	return &user, errors.WithStack(err)
 }
