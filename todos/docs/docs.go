@@ -27,7 +27,7 @@ var doc = `{
         "/todos": {
             "post": {
                 "tags": [
-                    "auth"
+                    "todos"
                 ],
                 "summary": "Создать новую задачу",
                 "parameters": [
@@ -60,6 +60,77 @@ var doc = `{
                         "schema": {
                             "$ref": "#/definitions/responses.httpError"
                         }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/responses.httpError"
+                        }
+                    }
+                }
+            }
+        },
+        "/todos/:id": {
+            "put": {
+                "tags": [
+                    "todos"
+                ],
+                "summary": "Обновить существующую задачу",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT-токен",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID задачи",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Новые значения задачи",
+                        "name": "todo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.NewTodo"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/responses.Todo"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/responses.httpError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/responses.httpError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/responses.httpError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/responses.httpError"
+                        }
                     }
                 }
             }
@@ -73,7 +144,8 @@ var doc = `{
             ],
             "properties": {
                 "deadline": {
-                    "type": "string"
+                    "type": "integer",
+                    "format": "int64"
                 },
                 "description": {
                     "type": "string"
@@ -87,7 +159,7 @@ var doc = `{
             "type": "object",
             "properties": {
                 "deadline": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "description": {
                     "type": "string"

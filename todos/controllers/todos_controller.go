@@ -1,10 +1,14 @@
 package controllers
 
 import (
+	"database/sql"
+	"fmt"
 	"net/http"
-	"time"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/pkg/errors"
 
 	"github.com/egsam98/users-todos/pkg/contract"
 	"github.com/egsam98/users-todos/pkg/responses"
@@ -24,11 +28,12 @@ func NewTodosController(q *db.Queries) *TodosController {
 
 // CreateTodo godoc
 // @Summary Создать новую задачу
-// @Tags auth
+// @Tags todos
 // @Param Authorization header string true "JWT-токен"
 // @Param todo body requests.NewTodo true "Новая задача"
 // @Success 201 {object} responses.Todo
 // @Failure 400 {object} responses.httpError
+// @Failure 401 {object} responses.httpError
 // @Router /todos [post]
 func (tc *TodosController) CreateTodo(ctx *gin.Context) {
 	var req requests.NewTodo
@@ -43,21 +48,66 @@ func (tc *TodosController) CreateTodo(ctx *gin.Context) {
 		return
 	}
 
-	var desc *string
-	if todo.Description.Valid {
-		desc = &todo.Description.String
+	ctx.JSON(201, responses2.NewTodo(*todo))
+}
+
+// UpdateTodo godoc
+// @Summary Обновить существующую задачу
+// @Tags todos
+// @Param Authorization header string true "JWT-токен"
+// @Param id path int true "ID задачи"
+// @Param todo body requests.NewTodo true "Новые значения задачи"
+// @Success 200 {object} responses.Todo
+// @Failure 400 {object} responses.httpError
+// @Failure 401 {object} responses.httpError
+// @Failure 403 {object} responses.httpError
+// @Failure 404 {object} responses.httpError
+// @Router /todos/:id [put]
+func (tc *TodosController) UpdateTodo(ctx *gin.Context) {
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		responses.RespondError(ctx, http.StatusBadRequest, "id must be integer")
+		return
 	}
 
-	var deadline *time.Time
-	if todo.Deadline.Valid {
-		deadline = &todo.Deadline.Time
+	var req requests.NewTodo
+	if errs, ok := contract.ValidateJSON(ctx, &req); !ok {
+		responses.RespondError(ctx, http.StatusBadRequest, errs)
+		return
 	}
 
-	ctx.JSON(201, responses2.Todo{
-		ID:          todo.ID,
-		Title:       todo.Title,
-		Description: desc,
-		Deadline:    deadline,
-		UserID:      todo.UserID,
-	})
+	if err := tc.validateRequiredKeysForUpdate(ctx); err != nil {
+		responses.RespondError(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	todo, err := tc.service.UpdateTodo(ctx, id, req)
+	if err != nil {
+		switch cause := errors.Cause(err); cause {
+		case sql.ErrNoRows:
+			responses.RespondError(ctx, http.StatusNotFound, fmt.Sprintf("todo ID=%d is not found", id))
+		case services.ErrNoAccessToTodo:
+			responses.RespondError(ctx, http.StatusForbidden, cause)
+		default:
+			responses.RespondInternalError(ctx, cause)
+		}
+		return
+	}
+
+	ctx.JSON(200, responses2.NewTodo(*todo))
+}
+
+// Проверка наличия ключей "description" и "deadline" в JSON-запросе для PUT /todos/:id
+func (_ *TodosController) validateRequiredKeysForUpdate(ctx *gin.Context) error {
+	reqMap := map[string]interface{}{}
+	if err := ctx.ShouldBindBodyWith(&reqMap, binding.JSON); err != nil {
+		panic(err)
+	}
+
+	for _, key := range []string{"description", "deadline"} {
+		if _, ok := reqMap[key]; !ok {
+			return errors.New(key + " must present")
+		}
+	}
+	return nil
 }

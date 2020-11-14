@@ -36,3 +36,49 @@ func (q *Queries) CreateTodo(ctx context.Context, arg CreateTodoParams) (Todo, e
 	)
 	return i, err
 }
+
+const findTodoById = `-- name: FindTodoById :one
+select id, title, description, deadline, user_id from todos where id = $1
+`
+
+func (q *Queries) FindTodoById(ctx context.Context, id int32) (Todo, error) {
+	row := q.db.QueryRowContext(ctx, findTodoById, id)
+	var i Todo
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.Deadline,
+		&i.UserID,
+	)
+	return i, err
+}
+
+const updateTodo = `-- name: UpdateTodo :one
+update todos set title=$1, description=$2, deadline=$3 where id=$4 returning id, title, description, deadline, user_id
+`
+
+type UpdateTodoParams struct {
+	Title       string         `json:"title"`
+	Description sql.NullString `json:"description"`
+	Deadline    sql.NullTime   `json:"deadline"`
+	ID          int32          `json:"id"`
+}
+
+func (q *Queries) UpdateTodo(ctx context.Context, arg UpdateTodoParams) (Todo, error) {
+	row := q.db.QueryRowContext(ctx, updateTodo,
+		arg.Title,
+		arg.Description,
+		arg.Deadline,
+		arg.ID,
+	)
+	var i Todo
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.Deadline,
+		&i.UserID,
+	)
+	return i, err
+}

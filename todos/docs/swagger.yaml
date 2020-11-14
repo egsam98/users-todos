@@ -3,7 +3,8 @@ definitions:
   requests.NewTodo:
     properties:
       deadline:
-        type: string
+        format: int64
+        type: integer
       description:
         type: string
       title:
@@ -14,7 +15,7 @@ definitions:
   responses.Todo:
     properties:
       deadline:
-        type: string
+        type: integer
       description:
         type: string
       id:
@@ -57,9 +58,56 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/responses.httpError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.httpError'
       summary: Создать новую задачу
       tags:
-      - auth
+      - todos
+  /todos/:id:
+    put:
+      parameters:
+      - description: JWT-токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID задачи
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Новые значения задачи
+        in: body
+        name: todo
+        required: true
+        schema:
+          $ref: '#/definitions/requests.NewTodo'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/responses.Todo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.httpError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.httpError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/responses.httpError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.httpError'
+      summary: Обновить существующую задачу
+      tags:
+      - todos
 securityDefinitions:
   JWT-Token:
     in: header

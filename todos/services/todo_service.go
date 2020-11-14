@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	time2 "github.com/egsam98/users-todos/pkg/time"
 	"github.com/egsam98/users-todos/todos/controllers/requests"
 	"github.com/egsam98/users-todos/todos/db"
 	context2 "github.com/egsam98/users-todos/todos/utils/context"
@@ -30,7 +31,7 @@ func (ts *TodoService) CreateTodo(ctx context.Context, req requests.NewTodo) (*d
 
 	deadline := sql.NullTime{}
 	if req.Deadline != nil {
-		deadline.Time = *req.Deadline
+		deadline.Time = time2.UtcFromUnix(*req.Deadline)
 		deadline.Valid = true
 	}
 
@@ -45,5 +46,40 @@ func (ts *TodoService) CreateTodo(ctx context.Context, req requests.NewTodo) (*d
 		Deadline:    deadline,
 		UserID:      userID,
 	})
+	return &todo, errors.WithStack(err)
+}
+
+// Обновить текущую задачу с опр. id новыми значения из requests.NewTodo
+func (ts *TodoService) UpdateTodo(ctx context.Context, id int, req requests.NewTodo) (*db.Todo, error) {
+	todo, err := ts.q.FindTodoById(ctx, int32(id))
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	currentUserID, err := context2.GetUserID(ctx)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	if todo.UserID != currentUserID {
+		return nil, ErrNoAccessToTodo
+	}
+
+	params := db.UpdateTodoParams{ID: int32(id), Title: req.Title}
+
+	if req.Description != nil {
+		params.Description.String = *req.Description
+		params.Description.Valid = true
+	} else {
+		params.Description.Valid = false
+	}
+	if req.Deadline != nil {
+		params.Deadline.Time = time2.UtcFromUnix(*req.Deadline)
+		params.Deadline.Valid = true
+	} else {
+		params.Deadline.Valid = false
+	}
+
+	todo, err = ts.q.UpdateTodo(ctx, params)
 	return &todo, errors.WithStack(err)
 }
