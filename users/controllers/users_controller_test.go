@@ -3,7 +3,6 @@ package controllers_test
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"testing"
@@ -183,7 +182,7 @@ func (s *usersControllerSuite) TestSignin_When_UserFoundByUsernameAndPassword() 
 	s.Equal(http.StatusOK, res.Code)
 
 	var body gin.H
-	s.NoError(json.NewDecoder(res.Body).Decode(&body))
+	testutils.DecodeBody(res, &body)
 	token, ok := body["token"]
 	if !ok {
 		s.Fail(`"token" key does not exist in JSON-response`)
@@ -238,7 +237,7 @@ func (s *usersControllerSuite) TestAuth_When_TokenInvalid() {
 	s.T().Logf("Response body: %v", res.Body)
 
 	var jsonBody gin.H
-	s.NoError(json.NewDecoder(res.Body).Decode(&jsonBody))
+	testutils.DecodeBody(res, &jsonBody)
 	if err, ok := jsonBody["error"]; !ok {
 		s.Fail("no 'error' key in response body")
 	} else {
@@ -267,6 +266,6 @@ func (s *usersControllerSuite) TestAuth() {
 	s.T().Logf("Response body: %v", res.Body)
 
 	var user db.User
-	s.NoError(json.NewDecoder(res.Body).Decode(&user))
+	testutils.DecodeBody(res, &user)
 	s.Equal(*expectedUser, user)
 }

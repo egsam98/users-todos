@@ -38,3 +38,10 @@ func GinHandler(router *gin.Engine, method, route string) gin.HandlerFunc {
 	}
 	panic("handler is not found")
 }
+
+// Преобразовать JSON-ответ сервера в obj
+func DecodeBody(res *httptest.ResponseRecorder, obj interface{}) {
+	if err := json.NewDecoder(res.Body).Decode(obj); err != nil {
+		panic(err)
+	}
+}

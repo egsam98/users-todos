@@ -3,7 +3,6 @@ package controllers_test
 import (
 	context2 "context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"sort"
@@ -127,7 +126,7 @@ func (s *todosControllerSuite) TestCreateTodo() {
 	s.Equal(http.StatusCreated, res.Code)
 
 	var actualRes responses.Todo
-	s.NoError(json.NewDecoder(res.Body).Decode(&actualRes))
+	testutils.DecodeBody(res, &actualRes)
 
 	expectedRes.ID = actualRes.ID
 	s.Equal(expectedRes, actualRes, "expected Todo doesn't match actual one")
@@ -209,7 +208,7 @@ func (s *todosControllerSuite) TestUpdateTodo() {
 	expected.Description = &desc
 
 	var actual responses.Todo
-	s.NoError(json.NewDecoder(res.Body).Decode(&actual))
+	testutils.DecodeBody(res, &actual)
 
 	s.Equal(expected, actual)
 }
@@ -281,7 +280,7 @@ func (s *todosControllerSuite) TestFetchAll() {
 	s.Equal(http.StatusOK, res.Code)
 
 	var actual []responses.Todo
-	s.NoError(json.NewDecoder(res.Body).Decode(&actual))
+	testutils.DecodeBody(res, &actual)
 	s.ElementsMatch(responses.NewTodos(todos), actual)
 
 	// Todo с имеющимся значением deadline имеет приоритет на todo со значением nil
@@ -339,7 +338,7 @@ func (s *todosControllerSuite) TestFetchBeforeDeadline() {
 	s.Equal(http.StatusOK, res.Code)
 
 	var actual []responses.Todo
-	s.NoError(json.NewDecoder(res.Body).Decode(&actual))
+	testutils.DecodeBody(res, &actual)
 	s.Len(actual, 1)
 	s.Equal(todo1.ID, actual[0].ID)
 }

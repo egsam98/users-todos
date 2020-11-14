@@ -12,3 +12,6 @@ sqlc:
 
 swag:
 	swag init --parseDependency
+
+test:
+	go test -v ./controllers
