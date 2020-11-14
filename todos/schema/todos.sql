@@ -20,3 +20,6 @@ delete from todos where id = $1 and user_id = $2;
 
 -- name: FindAll :many
 select * from todos where user_id = $1 order by deadline;
+
+-- name: FindBeforeDeadline :many
+select * from todos where deadline < $1 and user_id = $2 order by deadline;

@@ -1,5 +1,13 @@
 basePath: /
 definitions:
+  requests.Deadline:
+    properties:
+      deadline:
+        format: int64
+        type: integer
+    required:
+    - deadline
+    type: object
   requests.NewTodo:
     properties:
       deadline:
@@ -156,6 +164,38 @@ paths:
           schema:
             $ref: '#/definitions/responses.httpError'
       summary: Обновить существующую задачу
+      tags:
+      - todos
+  /todos/before:
+    post:
+      parameters:
+      - description: JWT-токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Deadline
+        in: body
+        name: deadline
+        required: true
+        schema:
+          $ref: '#/definitions/requests.Deadline'
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/responses.Todo'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.httpError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.httpError'
+      summary: Все задачи пользователя до определенного времени deadline
       tags:
       - todos
 securityDefinitions:

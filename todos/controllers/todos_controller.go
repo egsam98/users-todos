@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/egsam98/users-todos/pkg/contract"
+	errors2 "github.com/egsam98/users-todos/pkg/errors"
 	"github.com/egsam98/users-todos/pkg/responses"
 	"github.com/egsam98/users-todos/todos/controllers/requests"
 	responses2 "github.com/egsam98/users-todos/todos/controllers/responses"
@@ -42,7 +43,11 @@ func (tc *TodosController) CreateTodo(ctx *gin.Context) {
 
 	todo, err := tc.service.CreateTodo(ctx, req)
 	if err != nil {
-		responses.RespondInternalError(ctx, err)
+		if errors2.IsPgError(err, errors2.PgErrDatetimeFieldOverflow) {
+			responses.RespondError(ctx, http.StatusBadRequest, err)
+		} else {
+			responses.RespondInternalError(ctx, err)
+		}
 		return
 	}
 
@@ -87,7 +92,11 @@ func (tc *TodosController) UpdateTodo(ctx *gin.Context) {
 		case services.ErrNoAccessToTodo:
 			responses.RespondError(ctx, http.StatusForbidden, cause)
 		default:
-			responses.RespondInternalError(ctx, cause)
+			if errors2.IsPgError(cause, errors2.PgErrDatetimeFieldOverflow) {
+				responses.RespondError(ctx, http.StatusBadRequest, cause)
+			} else {
+				responses.RespondInternalError(ctx, cause)
+			}
 		}
 		return
 	}
@@ -134,6 +143,35 @@ func (tc *TodosController) FetchAll(ctx *gin.Context) {
 		responses.RespondInternalError(ctx, err)
 		return
 	}
+	ctx.JSON(200, responses2.NewTodos(todos))
+}
+
+// FetchBeforeDeadline godoc
+// @Summary Все задачи пользователя до определенного времени deadline
+// @Tags todos
+// @Param Authorization header string true "JWT-токен"
+// @Param deadline body requests.Deadline true "Deadline"
+// @Success 200 {array} responses.Todo
+// @Failure 400 {object} responses.httpError
+// @Failure 401 {object} responses.httpError
+// @Router /todos/before [post]
+func (tc *TodosController) FetchBeforeDeadline(ctx *gin.Context) {
+	var req requests.Deadline
+	if errs, ok := contract.ValidateJSON(ctx, &req); !ok {
+		responses.RespondError(ctx, http.StatusBadRequest, errs)
+		return
+	}
+
+	todos, err := tc.service.BeforeDeadline(ctx, req)
+	if err != nil {
+		if errors2.IsPgError(err, errors2.PgErrDatetimeFieldOverflow) {
+			responses.RespondError(ctx, http.StatusBadRequest, err)
+		} else {
+			responses.RespondInternalError(ctx, err)
+		}
+		return
+	}
+
 	ctx.JSON(200, responses2.NewTodos(todos))
 }
 

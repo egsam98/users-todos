@@ -209,9 +209,70 @@ var doc = `{
                     }
                 }
             }
+        },
+        "/todos/before": {
+            "post": {
+                "tags": [
+                    "todos"
+                ],
+                "summary": "Все задачи пользователя до определенного времени deadline",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT-токен",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Deadline",
+                        "name": "deadline",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/requests.Deadline"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/responses.Todo"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/responses.httpError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/responses.httpError"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "requests.Deadline": {
+            "type": "object",
+            "required": [
+                "deadline"
+            ],
+            "properties": {
+                "deadline": {
+                    "type": "integer",
+                    "format": "int64"
+                }
+            }
+        },
         "requests.NewTodo": {
             "type": "object",
             "required": [

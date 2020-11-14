@@ -116,3 +116,15 @@ func (ts *TodoService) All(ctx context.Context) ([]db.Todo, error) {
 
 	return ts.q.FindAll(ctx, userID)
 }
+
+// Задачи, deadline которых меньше переданного значения. Задачи отсортированы в порядке возрастания deadline
+func (ts *TodoService) BeforeDeadline(ctx context.Context, req requests.Deadline) ([]db.Todo, error) {
+	userID, err := context2.GetUserID(ctx)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return ts.q.FindBeforeDeadline(ctx, db.FindBeforeDeadlineParams{
+		Deadline: sql.NullTime{Time: time2.UtcFromUnix(req.Value), Valid: true},
+		UserID:   userID,
+	})
+}
