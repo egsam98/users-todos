@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/egsam98/users-todos/pkg/dbutils"
 	"github.com/egsam98/users-todos/pkg/env"
 	env2 "github.com/egsam98/users-todos/users/utils/env"
 
@@ -22,7 +23,7 @@ import (
 func main() {
 	var environment env2.Environment
 	env.InitEnvironment(&environment)
-	q := db.New(db.Init(environment.Database.Driver, environment.Database.ConnDev))
+	q := db.New(dbutils.Init(environment.Database.Driver, environment.Database.ConnDev))
 	r := controllers.Init(environment, q)
 	log.Fatal(r.Run(environment.Addr))
 }

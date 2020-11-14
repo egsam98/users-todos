@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -182,10 +184,16 @@ func (_ *TodosController) validateRequiredKeysForUpdate(ctx *gin.Context) error 
 		panic(err)
 	}
 
+	missingKeys := make([]string, 0)
 	for _, key := range []string{"description", "deadline"} {
 		if _, ok := reqMap[key]; !ok {
-			return errors.New(key + " must present")
+			missingKeys = append(missingKeys, "'"+key+"'")
 		}
 	}
+
+	if len(missingKeys) > 0 {
+		return fmt.Errorf("%s must present", strings.Join(missingKeys, ", "))
+	}
+
 	return nil
 }

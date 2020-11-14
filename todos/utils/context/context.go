@@ -5,12 +5,16 @@ import (
 	"errors"
 )
 
-var ErrNoUserID = errors.New("userID does not exist in context")
+const userIDKey = "userID"
 
 func GetUserID(ctx context.Context) (int32, error) {
-	userID, ok := ctx.Value("userID").(int32)
+	i := ctx.Value(userIDKey)
+	if i == nil {
+		return 0, errors.New("key '" + userIDKey + "' is not found")
+	}
+	userID, ok := i.(int32)
 	if !ok {
-		return 0, ErrNoUserID
+		return 0, errors.New("must be int32")
 	}
 	return userID, nil
 }

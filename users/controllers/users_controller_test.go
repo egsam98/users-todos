@@ -12,6 +12,7 @@ import (
 	"github.com/pressly/goose"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/egsam98/users-todos/pkg/dbutils"
 	"github.com/egsam98/users-todos/pkg/env"
 	"github.com/egsam98/users-todos/pkg/testutils"
 	"github.com/egsam98/users-todos/users/controllers"
@@ -36,7 +37,7 @@ func (s *usersControllerSuite) SetupSuite() {
 	var environment env2.Environment
 	env.InitEnvironment(&environment)
 
-	database := db.Init(environment.Database.Driver, environment.Database.ConnTest)
+	database := dbutils.Init(environment.Database.Driver, environment.Database.ConnTest)
 	s.NoError(goose.Up(database, migrationsFolder))
 	s.db = database
 	s.q = db.New(database)
