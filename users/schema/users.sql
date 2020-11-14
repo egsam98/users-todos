@@ -4,8 +4,8 @@ create table if not exists users (
     password varchar not null
 );
 
--- name: CreateUser :exec
-insert into users (username, password) values ($1, $2);
+-- name: CreateUser :one
+insert into users (username, password) values ($1, $2) returning *;
 
 -- name: FindUser :one
 select * from users where username = $1 and password = $2 limit 1;

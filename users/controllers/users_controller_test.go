@@ -1,6 +1,7 @@
 package controllers_test
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 	"github.com/egsam98/users-todos/users/controllers"
 	"github.com/egsam98/users-todos/users/db"
 	env2 "github.com/egsam98/users-todos/users/utils/env"
+	"github.com/egsam98/users-todos/users/utils/testmocks"
 )
 
 const (
@@ -26,6 +28,7 @@ const (
 type usersControllerSuite struct {
 	suite.Suite
 	db     *sql.DB
+	q      *db.Queries
 	router *gin.Engine
 }
 
@@ -36,9 +39,11 @@ func (s *usersControllerSuite) SetupSuite() {
 	database := db.Init(environment.Database.Driver, environment.Database.ConnTest)
 	s.NoError(goose.Up(database, migrationsFolder))
 	s.db = database
+	s.q = db.New(database)
 
 	gin.SetMode(gin.TestMode)
-	s.router = controllers.Init(environment, db.New(database))
+	s.router = controllers.Init(environment, s.q)
+	s.router.GET("/users-test/:id", testutils.GinHandler(s.router, "GET", "/users/:id"))
 }
 
 func (s *usersControllerSuite) TearDownTest() {
@@ -52,7 +57,7 @@ func TestUsersController(t *testing.T) {
 
 func (s *usersControllerSuite) TestSignup_When_RequestBodyIsEmpty() {
 	req := testutils.NewRequestJSON("POST", "/signup", nil)
-	res := testutils.RunGinTest(s.router, req)
+	res := testutils.RunHTTPTest(s.router, req)
 
 	s.Equal(http.StatusBadRequest, res.Code)
 	s.JSONEq(errorEmptyJSON, res.Body.String())
@@ -69,7 +74,7 @@ func (s *usersControllerSuite) TestSignup_When_WrongUsernameProvided() {
 	for _, variant := range bodyVariants {
 		s.Run(fmt.Sprintf("when username = %v", variant["username"]), func() {
 			req := testutils.NewRequestJSON("POST", "/signup", variant)
-			res := testutils.RunGinTest(s.router, req)
+			res := testutils.RunHTTPTest(s.router, req)
 			s.Equal(http.StatusBadRequest, res.Code)
 			s.JSONEq(`{"error": {"username": "must be non empty and have max length 12"}}`, res.Body.String())
 		})
@@ -89,7 +94,7 @@ func (s *usersControllerSuite) TestSignup_When_WrongPasswordProvided() {
 		testName := fmt.Sprintf("when password = %v, password_confirmation = %v", variant["password"], variant["password_confirmation"])
 		s.Run(testName, func() {
 			req := testutils.NewRequestJSON("POST", "/signup", variant)
-			res := testutils.RunGinTest(s.router, req)
+			res := testutils.RunHTTPTest(s.router, req)
 			s.Equal(http.StatusBadRequest, res.Code)
 
 			jsonRes := ""
@@ -106,7 +111,7 @@ func (s *usersControllerSuite) TestSignup_When_WrongPasswordProvided() {
 	}
 
 	req := testutils.NewRequestJSON("POST", "/signup", bodyVariants[len(bodyVariants)-1])
-	res := testutils.RunGinTest(s.router, req)
+	res := testutils.RunHTTPTest(s.router, req)
 	s.Equal(http.StatusBadRequest, res.Code)
 	s.JSONEq(`{"error": {"password_confirmation":"must match password field"}}`, res.Body.String())
 }
@@ -117,13 +122,13 @@ func (s *usersControllerSuite) TestSignup_When_RequestBodyIsCorrect() {
 		"password":              "somepassword",
 		"password_confirmation": "somepassword",
 	})
-	res := testutils.RunGinTest(s.router, req)
+	res := testutils.RunHTTPTest(s.router, req)
 	s.Equal(http.StatusCreated, res.Code)
 }
 
 func (s *usersControllerSuite) TestSignin_When_RequestBodyIsEmpty() {
 	req := testutils.NewRequestJSON("POST", "/signin", nil)
-	res := testutils.RunGinTest(s.router, req)
+	res := testutils.RunHTTPTest(s.router, req)
 	s.Equal(http.StatusBadRequest, res.Code)
 	s.JSONEq(errorEmptyJSON, res.Body.String())
 }
@@ -134,7 +139,7 @@ func (s *usersControllerSuite) TestSignin_When_WrongCredentialsProvided() {
 			"username": nil,
 			"password": "pass",
 		})
-		res := testutils.RunGinTest(s.router, req)
+		res := testutils.RunHTTPTest(s.router, req)
 		s.Equal(http.StatusBadRequest, res.Code)
 		s.JSONEq(`{"error": {"username":"must be non empty"}}`, res.Body.String())
 	})
@@ -142,7 +147,7 @@ func (s *usersControllerSuite) TestSignin_When_WrongCredentialsProvided() {
 		req := testutils.NewRequestJSON("POST", "/signin", gin.H{
 			"username": "someuser",
 		})
-		res := testutils.RunGinTest(s.router, req)
+		res := testutils.RunHTTPTest(s.router, req)
 		s.Equal(http.StatusBadRequest, res.Code)
 		s.JSONEq(`{"error": {"password":"must be non empty"}}`, res.Body.String())
 	})
@@ -153,7 +158,7 @@ func (s *usersControllerSuite) TestSignin_When_UserNotFoundByUsernameAndPassword
 		"username": "someuser",
 		"password": "pass",
 	})
-	res := testutils.RunGinTest(s.router, req)
+	res := testutils.RunHTTPTest(s.router, req)
 	s.Equal(http.StatusUnauthorized, res.Code)
 	s.JSONEq(`{"error":"username or/and password is incorrect"}`, res.Body.String())
 }
@@ -162,7 +167,7 @@ func (s *usersControllerSuite) TestSignin_When_UserFoundByUsernameAndPassword() 
 	// Регистрация пользователя в базе
 	username := "someuser"
 	password := "password"
-	res := testutils.RunGinTest(s.router, testutils.NewRequestJSON("POST", "/signup", gin.H{
+	res := testutils.RunHTTPTest(s.router, testutils.NewRequestJSON("POST", "/signup", gin.H{
 		"username":              username,
 		"password":              password,
 		"password_confirmation": password,
@@ -173,7 +178,7 @@ func (s *usersControllerSuite) TestSignin_When_UserFoundByUsernameAndPassword() 
 		"username": username,
 		"password": password,
 	})
-	res = testutils.RunGinTest(s.router, req)
+	res = testutils.RunHTTPTest(s.router, req)
 	s.Equal(http.StatusOK, res.Code)
 
 	var body gin.H
@@ -183,4 +188,84 @@ func (s *usersControllerSuite) TestSignin_When_UserFoundByUsernameAndPassword() 
 		s.Fail(`"token" key does not exist in JSON-response`)
 	}
 	s.IsType("string", token)
+}
+
+func (s *usersControllerSuite) TestFetchUser_When_JWTIsRequired() {
+	testutils.JwtAuthRequired(s.T(), s.router, "GET", "/users/1")
+}
+
+func (s *usersControllerSuite) TestFetchUser_When_IDNotAnInteger() {
+	req := testutils.NewRequestJSON("GET", "/users-test/a", nil)
+	res := testutils.RunHTTPTest(s.router, req)
+	s.Equal(http.StatusBadRequest, res.Code)
+	s.JSONEq(`{"error": "user ID must be integer"}`, res.Body.String())
+}
+
+func (s *usersControllerSuite) TestFetchUser_When_UserNotFound() {
+	req := testutils.NewRequestJSON("GET", "/users-test/0", nil)
+	res := testutils.RunHTTPTest(s.router, req)
+	s.Equal(http.StatusNotFound, res.Code)
+	s.JSONEq(`{"error": "user ID=0 is not found"}`, res.Body.String())
+}
+
+func (s *usersControllerSuite) TestFetchUser() {
+	user, err := db.New(s.db).CreateUser(context.TODO(), db.CreateUserParams{
+		Username: "someuser",
+		Password: "%f$dzzrd$%d",
+	})
+	s.NoError(err)
+
+	req := testutils.NewRequestJSON("GET", fmt.Sprintf("/users-test/%d", user.ID), nil)
+	res := testutils.RunHTTPTest(s.router, req)
+	s.Equal(http.StatusOK, res.Code)
+	s.JSONEq(fmt.Sprintf(`{"id":%d, "username":"someuser"}`, user.ID), res.Body.String())
+}
+
+func (s *usersControllerSuite) TestAuth_When_NoAuthorizationHeader() {
+	req := testutils.NewRequestJSON("POST", "/auth", nil)
+	res := testutils.RunHTTPTest(s.router, req)
+	s.Equal(http.StatusForbidden, res.Code)
+	s.JSONEq(`{"error": "Authorization header is not provided"}`, res.Body.String())
+}
+
+func (s *usersControllerSuite) TestAuth_When_TokenInvalid() {
+	req := testutils.NewRequestJSON("POST", "/auth", nil)
+	req.Header.Set("Authorization", "t.t.t")
+	res := testutils.RunHTTPTest(s.router, req)
+	s.Equal(http.StatusForbidden, res.Code)
+
+	s.T().Logf("Response body: %v", res.Body)
+
+	var jsonBody gin.H
+	s.NoError(json.NewDecoder(res.Body).Decode(&jsonBody))
+	if err, ok := jsonBody["error"]; !ok {
+		s.Fail("no 'error' key in response body")
+	} else {
+		if _, ok := err.(map[string]interface{})["jwt"]; !ok {
+			s.Fail("no 'error.jwt' key in response body")
+		}
+	}
+}
+
+func (s *usersControllerSuite) TestAuth() {
+	tokenServiceMock := testmocks.NewTokenServiceMock(s.q)
+	token := "some_token"
+	expectedUser := &db.User{
+		ID:       0,
+		Username: token,
+	}
+	tokenServiceMock.On("Parse", token).Return(expectedUser, nil)
+
+	controller := &controllers.UsersController{TokenService: tokenServiceMock}
+	s.router.POST("/users-test/auth", controller.Auth(false))
+	req := testutils.NewRequestJSON("POST", "/users-test/auth", nil)
+	req.Header.Set("Authorization", token)
+	res := testutils.RunHTTPTest(s.router, req)
+	s.Equal(http.StatusOK, res.Code)
+
+	s.T().Logf("Response body: %v", res.Body)
+
+	var user db.User
+	s.NoError(json.NewDecoder(res.Body).Decode(&user))
+	s.Equal(*expectedUser, user)
 }

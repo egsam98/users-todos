@@ -2,6 +2,8 @@
 
 package db
 
+import ()
+
 type User struct {
 	ID       int32  `json:"id"`
 	Username string `json:"username"`

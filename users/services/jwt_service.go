@@ -17,6 +17,15 @@ const tokenExpiresIn = 5 * 24 * time.Hour
 
 var errTokenIsInvalid = errors.New("token is invalid")
 
+// Сервис генерации и валидации токена
+type TokenService interface {
+	Generate(user db.User) (string, error)
+	Parse(ctx context.Context, tokenString string) (*db.User, error)
+}
+
+var _ TokenService = (*JwtService)(nil)
+
+// Генерация и валидация JWT-токена
 type JwtService struct {
 	environment env.Environment
 	q           *db.Queries

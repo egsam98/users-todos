@@ -21,9 +21,20 @@ func NewRequestJSON(method, target string, jsonBody interface{}) *http.Request {
 	return httptest.NewRequest(method, target, bytes.NewBuffer(data))
 }
 
-// Запустить тест - HTTP запрос к gin-роутеру
-func RunGinTest(r *gin.Engine, req *http.Request) *httptest.ResponseRecorder {
+// Запустить тест - HTTP запрос
+func RunHTTPTest(h http.Handler, req *http.Request) *httptest.ResponseRecorder {
 	rec := httptest.NewRecorder()
-	r.ServeHTTP(rec, req)
+	h.ServeHTTP(rec, req)
 	return rec
+}
+
+// Поиск gin.HandlerFunc по методу и маршруту
+// Используется для установления нового тестового маршрута во избежание миддлваров
+func GinHandler(router *gin.Engine, method, route string) gin.HandlerFunc {
+	for _, info := range router.Routes() {
+		if info.Path == route && info.Method == method {
+			return info.HandlerFunc
+		}
+	}
+	panic("handler is not found")
 }

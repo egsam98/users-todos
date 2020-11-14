@@ -20,12 +20,12 @@ import (
 )
 
 type UsersController struct {
-	userService *services.UserService
-	jwtService  *services.JwtService
+	UserService  *services.UserService
+	TokenService services.TokenService
 }
 
 func NewUsersController(environment env.Environment, q *db.Queries) *UsersController {
-	return &UsersController{userService: services.NewUserService(q), jwtService: services.NewJwtService(environment, q)}
+	return &UsersController{UserService: services.NewUserService(q), TokenService: services.NewJwtService(environment, q)}
 }
 
 // Signup godoc
@@ -44,7 +44,7 @@ func (uc *UsersController) Signup(ctx *gin.Context) {
 		return
 	}
 
-	if err := uc.userService.Register(ctx, req); err != nil {
+	if err := uc.UserService.Register(ctx, req); err != nil {
 		if errors.IsPgError(err, errors.PgErrUniqueViolated) {
 			responses.RespondError(ctx, http.StatusBadRequest, "user with this username already exists")
 			return
@@ -72,7 +72,7 @@ func (uc *UsersController) Signin(ctx *gin.Context) {
 		return
 	}
 
-	user, err := uc.userService.Authenticate(ctx, req)
+	user, err := uc.UserService.Authenticate(ctx, req)
 	if err != nil {
 		if errors2.Cause(err) == sql.ErrNoRows {
 			responses.RespondError(ctx, http.StatusUnauthorized, "username or/and password is incorrect")
@@ -82,7 +82,7 @@ func (uc *UsersController) Signin(ctx *gin.Context) {
 		return
 	}
 
-	token, err := uc.jwtService.Generate(user)
+	token, err := uc.TokenService.Generate(user)
 	if err != nil {
 		responses.RespondInternalError(ctx, err)
 		return
@@ -108,7 +108,7 @@ func (uc *UsersController) FetchUser(ctx *gin.Context) {
 		responses.RespondError(ctx, http.StatusBadRequest, "user ID must be integer")
 		return
 	}
-	user, err := uc.userService.FindUser(ctx, id)
+	user, err := uc.UserService.FindUser(ctx, id)
 	if err != nil {
 		if errors2.Cause(err) == sql.ErrNoRows {
 			responses.RespondError(ctx, http.StatusNotFound, fmt.Sprintf("user ID=%d is not found", id))
@@ -139,7 +139,7 @@ func (uc *UsersController) Auth(isMiddleware bool) gin.HandlerFunc {
 			return
 		}
 
-		user, err := uc.jwtService.Parse(ctx, authHeader)
+		user, err := uc.TokenService.Parse(ctx, authHeader)
 		if err != nil {
 			responses.RespondError(ctx, http.StatusForbidden, gin.H{"jwt": err.Error()})
 			return

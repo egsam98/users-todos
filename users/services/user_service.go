@@ -24,10 +24,11 @@ func NewUserService(q *db.Queries) *UserService {
 
 // Зарегистрировать пользователя в системе
 func (us *UserService) Register(ctx context.Context, req requests.Signup) error {
-	return us.q.CreateUser(ctx, db.CreateUserParams{
+	_, err := us.q.CreateUser(ctx, db.CreateUserParams{
 		Username: req.Username,
 		Password: us.hashPassword(req.Password),
 	})
+	return errors.WithStack(err)
 }
 
 // Аутентификация пользователя по username и password
