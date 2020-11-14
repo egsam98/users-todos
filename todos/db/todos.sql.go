@@ -54,6 +54,39 @@ func (q *Queries) DeleteTodo(ctx context.Context, arg DeleteTodoParams) (int64, 
 	return result.RowsAffected()
 }
 
+const findAll = `-- name: FindAll :many
+select id, title, description, deadline, user_id from todos where user_id = $1 order by deadline
+`
+
+func (q *Queries) FindAll(ctx context.Context, userID int32) ([]Todo, error) {
+	rows, err := q.db.QueryContext(ctx, findAll, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Todo
+	for rows.Next() {
+		var i Todo
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Description,
+			&i.Deadline,
+			&i.UserID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const findTodoById = `-- name: FindTodoById :one
 select id, title, description, deadline, user_id from todos where id = $1
 `

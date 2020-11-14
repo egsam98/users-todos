@@ -17,3 +17,6 @@ update todos set title=$1, description=$2, deadline=$3 where id=$4 returning *;
 
 -- name: DeleteTodo :execrows
 delete from todos where id = $1 and user_id = $2;
+
+-- name: FindAll :many
+select * from todos where user_id = $1 order by deadline;

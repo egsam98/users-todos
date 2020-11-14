@@ -44,6 +44,7 @@ func initRouter(environment env2.Environment, q *db.Queries) *gin.Engine {
 	safeR.POST("/todos", todosController.CreateTodo)
 	safeR.PUT("/todos/:id", todosController.UpdateTodo)
 	safeR.DELETE("/todos/:id", todosController.DeleteTodo)
+	safeR.GET("/todos", todosController.FetchAll)
 
 	return r
 }

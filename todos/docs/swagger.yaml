@@ -36,6 +36,27 @@ info:
   version: "1.0"
 paths:
   /todos:
+    get:
+      parameters:
+      - description: JWT-токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/responses.Todo'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.httpError'
+      summary: Все задачи пользователя
+      tags:
+      - todos
     post:
       parameters:
       - description: JWT-токен

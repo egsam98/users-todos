@@ -121,6 +121,22 @@ func (tc *TodosController) DeleteTodo(ctx *gin.Context) {
 	}
 }
 
+// FetchAll godoc
+// @Summary Все задачи пользователя
+// @Tags todos
+// @Param Authorization header string true "JWT-токен"
+// @Success 200 {array} responses.Todo
+// @Failure 401 {object} responses.httpError
+// @Router /todos [get]
+func (tc *TodosController) FetchAll(ctx *gin.Context) {
+	todos, err := tc.service.All(ctx)
+	if err != nil {
+		responses.RespondInternalError(ctx, err)
+		return
+	}
+	ctx.JSON(200, responses2.NewTodos(todos))
+}
+
 // Проверка наличия ключей "description" и "deadline" в JSON-запросе для PUT /todos/:id
 func (_ *TodosController) validateRequiredKeysForUpdate(ctx *gin.Context) error {
 	reqMap := map[string]interface{}{}

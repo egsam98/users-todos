@@ -33,3 +33,11 @@ func NewTodo(todo db.Todo) Todo {
 		UserID:      todo.UserID,
 	}
 }
+
+func NewTodos(todos []db.Todo) []Todo {
+	res := make([]Todo, len(todos))
+	for i, todo := range todos {
+		res[i] = NewTodo(todo)
+	}
+	return res
+}

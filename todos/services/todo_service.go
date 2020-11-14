@@ -106,3 +106,13 @@ func (ts *TodoService) DeleteTodo(ctx context.Context, id int) error {
 
 	return nil
 }
+
+// Все задачи пользователя, отсортированные в порядке возрастания deadline
+func (ts *TodoService) All(ctx context.Context) ([]db.Todo, error) {
+	userID, err := context2.GetUserID(ctx)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return ts.q.FindAll(ctx, userID)
+}

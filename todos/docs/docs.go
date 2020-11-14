@@ -25,6 +25,38 @@ var doc = `{
     "basePath": "{{.BasePath}}",
     "paths": {
         "/todos": {
+            "get": {
+                "tags": [
+                    "todos"
+                ],
+                "summary": "Все задачи пользователя",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT-токен",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/responses.Todo"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/responses.httpError"
+                        }
+                    }
+                }
+            },
             "post": {
                 "tags": [
                     "todos"
