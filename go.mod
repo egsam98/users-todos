@@ -10,7 +10,8 @@ require (
 	github.com/go-playground/validator/v10 v10.2.0
 	github.com/lib/pq v1.8.0
 	github.com/pkg/errors v0.8.1
-	github.com/pressly/goose v2.6.0+incompatible // indirect
+	github.com/pressly/goose v2.6.0+incompatible
+	github.com/stretchr/testify v1.6.1
 	github.com/swaggo/files v0.0.0-20190704085106-630677cd5c14
 	github.com/swaggo/gin-swagger v1.3.0
 	github.com/swaggo/swag v1.6.9
