@@ -53,6 +53,9 @@ func (ts *TodoService) CreateTodo(ctx context.Context, req requests.NewTodo) (*d
 func (ts *TodoService) UpdateTodo(ctx context.Context, id int, req requests.NewTodo) (*db.Todo, error) {
 	todo, err := ts.q.FindTodoById(ctx, int32(id))
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.WithStack(ErrNoTodoFound)
+		}
 		return nil, errors.WithStack(err)
 	}
 
@@ -82,4 +85,24 @@ func (ts *TodoService) UpdateTodo(ctx context.Context, id int, req requests.NewT
 
 	todo, err = ts.q.UpdateTodo(ctx, params)
 	return &todo, errors.WithStack(err)
+}
+
+// Удалить задачу
+func (ts *TodoService) DeleteTodo(ctx context.Context, id int) error {
+	userID, err := context2.GetUserID(ctx)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	rowsAffected, err := ts.q.DeleteTodo(ctx, db.DeleteTodoParams{
+		ID:     int32(id),
+		UserID: userID,
+	})
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	if rowsAffected == 0 {
+		return errors.WithStack(ErrNoTodoFound)
+	}
+
+	return nil
 }

@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"database/sql"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -84,8 +82,8 @@ func (tc *TodosController) UpdateTodo(ctx *gin.Context) {
 	todo, err := tc.service.UpdateTodo(ctx, id, req)
 	if err != nil {
 		switch cause := errors.Cause(err); cause {
-		case sql.ErrNoRows:
-			responses.RespondError(ctx, http.StatusNotFound, fmt.Sprintf("todo ID=%d is not found", id))
+		case services.ErrNoTodoFound:
+			responses.RespondError(ctx, http.StatusNotFound, cause)
 		case services.ErrNoAccessToTodo:
 			responses.RespondError(ctx, http.StatusForbidden, cause)
 		default:
@@ -95,6 +93,32 @@ func (tc *TodosController) UpdateTodo(ctx *gin.Context) {
 	}
 
 	ctx.JSON(200, responses2.NewTodo(*todo))
+}
+
+// DeleteTodo godoc
+// @Summary Удалить существующую задачу
+// @Tags todos
+// @Param Authorization header string true "JWT-токен"
+// @Param id path int true "ID задачи"
+// @Success 200
+// @Failure 400 {object} responses.httpError
+// @Failure 401 {object} responses.httpError
+// @Failure 404 {object} responses.httpError
+// @Router /todos/:id [delete]
+func (tc *TodosController) DeleteTodo(ctx *gin.Context) {
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		responses.RespondError(ctx, http.StatusBadRequest, "id must be integer")
+		return
+	}
+
+	if err := tc.service.DeleteTodo(ctx, id); err != nil {
+		if errors.Cause(err) == services.ErrNoTodoFound {
+			responses.RespondError(ctx, http.StatusNotFound, err)
+		} else {
+			responses.RespondInternalError(ctx, err)
+		}
+	}
 }
 
 // Проверка наличия ключей "description" и "deadline" в JSON-запросе для PUT /todos/:id

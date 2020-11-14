@@ -14,3 +14,6 @@ select * from todos where id = $1;
 
 -- name: UpdateTodo :one
 update todos set title=$1, description=$2, deadline=$3 where id=$4 returning *;
+
+-- name: DeleteTodo :execrows
+delete from todos where id = $1 and user_id = $2;

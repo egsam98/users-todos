@@ -66,6 +66,35 @@ paths:
       tags:
       - todos
   /todos/:id:
+    delete:
+      parameters:
+      - description: JWT-токен
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID задачи
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200": {}
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/responses.httpError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/responses.httpError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/responses.httpError'
+      summary: Удалить существующую задачу
+      tags:
+      - todos
     put:
       parameters:
       - description: JWT-токен

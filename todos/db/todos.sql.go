@@ -37,6 +37,23 @@ func (q *Queries) CreateTodo(ctx context.Context, arg CreateTodoParams) (Todo, e
 	return i, err
 }
 
+const deleteTodo = `-- name: DeleteTodo :execrows
+delete from todos where id = $1 and user_id = $2
+`
+
+type DeleteTodoParams struct {
+	ID     int32 `json:"id"`
+	UserID int32 `json:"user_id"`
+}
+
+func (q *Queries) DeleteTodo(ctx context.Context, arg DeleteTodoParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, deleteTodo, arg.ID, arg.UserID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const findTodoById = `-- name: FindTodoById :one
 select id, title, description, deadline, user_id from todos where id = $1
 `

@@ -43,6 +43,7 @@ func initRouter(environment env2.Environment, q *db.Queries) *gin.Engine {
 	todosController := controllers.NewTodosController(q)
 	safeR.POST("/todos", todosController.CreateTodo)
 	safeR.PUT("/todos/:id", todosController.UpdateTodo)
+	safeR.DELETE("/todos/:id", todosController.DeleteTodo)
 
 	return r
 }
