@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  users-db:
+    image: postgres:alpine
+    container_name: users-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_DEV: users_dev
+      POSTGRES_TEST: users_test
+    ports:
+      - 5433:5432
+    volumes:
+      - ./users/schema:/docker-entrypoint-initdb.d/schema
+      - ./docker-initdb.sh:/docker-entrypoint-initdb.d/initdb.sh
+      - ./users/postgres-data:/var/lib/postgresql/data
+
+  users:
+    image: users:latest
+    container_name: users
+    environment:
+      ADDR: ":8080"
+      JWT_SIGNATURE: "users-todos.io"
+      DATABASE_DRIVER: "postgres"
+      DATABASE_CONN_DEV: "postgres://postgres:postgres@localhost:5433/users_dev?sslmode=disable"
+      DATABASE_CONN_TEST: "postgres://postgres:postgres@localhost:5433/users_test?sslmode=disable"
+    ports:
+      - 8080:8080
+    build:
+      dockerfile: users/Dockerfile
+      context: .
+    depends_on:
+      - users-db
+    network_mode: host
+
+  todos-db:
+    image: postgres:alpine
+    container_name: todos-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_DEV: todos_dev
+      POSTGRES_TEST: todos_test
+    ports:
+      - 5434:5432
+    volumes:
+      - ./todos/schema:/docker-entrypoint-initdb.d/schema
+      - ./docker-initdb.sh:/docker-entrypoint-initdb.d/initdb.sh
+      - ./todos/postgres-data:/var/lib/postgresql/data
+
+  todos:
+    image: todos:latest
+    container_name: todos
+    environment:
+      ADDR: ":8081"
+      DATABASE_DRIVER: "postgres"
+      DATABASE_CONN_DEV: "postgres://postgres:postgres@localhost:5434/todos_dev?sslmode=disable"
+      DATABASE_CONN_TEST: "postgres://postgres:postgres@localhost:5434/todos_test?sslmode=disable"
+      AUTH_URL: "http://localhost:8080/auth"
+    ports:
+      - 8081:8081
+    build:
+      dockerfile: todos/Dockerfile
+      context: .
+    depends_on:
+      - todos-db
+    network_mode: host

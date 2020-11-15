@@ -1,11 +1,11 @@
 DATABASE_DRIVER ?= postgres
-DATABASE_CONN ?= postgres://localhost:5432/users_dev
+DATABASE_CONN_DEV ?= postgres://localhost:5432/users_dev
 
 migrate_up:
-	goose -dir migrations $(DATABASE_DRIVER) $(DATABASE_CONN) up
+	goose -dir migrations $(DATABASE_DRIVER) $(DATABASE_CONN_DEV) up
 
 migrate_down:
-	goose -dir migrations $(DATABASE_DRIVER) $(DATABASE_CONN) down
+	goose -dir migrations $(DATABASE_DRIVER) $(DATABASE_CONN_DEV) down
 
 sqlc:
 	sqlc generate
@@ -15,3 +15,6 @@ swag:
 
 test:
 	go test -v ./controllers
+
+docker:
+	docker build -f Dockerfile -t users:latest ../
